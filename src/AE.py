@@ -56,7 +56,8 @@ class AE(object):
             self.x_dec = self._decode(self.z.qbar, self.ae_imgcomp, is_training=self.is_training)
 
         with tf.variable_scope('siFinder'):
-            self.y_syn, self.ncc, self.extermum_ncc, self.q, self.r, self.row, self.col, self.x_patches, self.y_patches = self._SI_full_img(
+            self.y_syn, self.ncc, self.extermum_ncc, self.q, self.r, self.row, self.col, self.x_patches, self.y_patches = \
+                self._SI_full_img(
                 self.x_dec, self.side_info_placeholder, self.mask, self._y_patch_h, self._y_patch_w, self.ae_config,
                 self.y_dec)
 
@@ -71,7 +72,7 @@ class AE(object):
         with tf.variable_scope('imgcomp'):
             # Train part:
             # stop_gradient is beneficial for training. it prevents multiple gradients flowing into the heatmap.
-            pc_in = tf.stop_gradient(self.z.qbar)
+            pc_in = tf.stop_gradient(self.z.qbar) # the latent representation that is output by the encoder
             bc_train = self.pc_imgcomp.bitcost(pc_in, self.z.symbols, is_training=self.is_training,
                                                pad_value=self.pc_imgcomp.auto_pad_value(self.ae_imgcomp))
             self.bpp_train = bits.bitcost_to_bpp(bc_train, self.x)
