@@ -130,7 +130,7 @@ class _Network(object):
         assert self._centers is not None
         qsoft, qhard, symbols = quantizer.quantize(inputs, self._centers, sigma=1)
         with tf.name_scope('qbar'):
-            qbar = qsoft + tf.stop_gradient(qhard - qsoft)
+            qbar = qsoft + tf.stop_gradient(qhard - qsoft) # Eq(4) in the paper
         return _QuantizerOutput(qbar, qsoft, qhard, symbols)
 
     def _normalize(self, data):
@@ -219,24 +219,32 @@ class _CVPR(_Network):
     def _encode(self, x, is_training):
         n = arch_param_n
         with self._batch_norm_scope(is_training):
-            net = self._normalize(x)
-            net = slim.conv2d(net, n // 2, [5, 5], stride=2, scope='h1')
-            net = slim.conv2d(net, n, [5, 5], stride=2, scope='h2')
+            """
+            The architecture is explained in details in the subtext of Figure 2.
+            """
+            net = self._normalize(x) # normalization layer
+
+            # since n := 128 then n // 2 = 64
+            net = slim.conv2d(net, n // 2, [5, 5], stride=2, scope='h1') # marked as k5 n64-2, notice that  
+            net = slim.conv2d(net, n, [5, 5], stride=2, scope='h2') # marked as k5 n128-2, notice that  
             residual_input_0 = net
-            for b in range(self.config.arch_param_B):
+
+            # 15 residual blocks creation.
+            # the for-loop creates 5 uber-blocks consisting each of 3 residual blocks with skip connections 
+            for b in range(self.config.arch_param_B): # arch_param_B=5 by default according to ```ae_run_configs``` file is 
                 residual_input_b = net
                 with tf.variable_scope('res_block_enc_{}'.format(b)):
                     net = residual_block(net, n, num_conv2d=2, kernel_size=[3, 3], scope='enc_{}_1'.format(b))
                     net = residual_block(net, n, num_conv2d=2, kernel_size=[3, 3], scope='enc_{}_2'.format(b))
                     net = residual_block(net, n, num_conv2d=2, kernel_size=[3, 3], scope='enc_{}_3'.format(b))
-                net = net + residual_input_b
+                net = net + residual_input_b # a skip-connection between every 3 residual blocks to the input to the first uber-block
             net = residual_block(net, n, num_conv2d=2, kernel_size=[3, 3], scope='res_block_enc_final',
-                                 activation_fn=None)
-            net = net + residual_input_0
+                                 activation_fn=None) # another residual block
+            net = net + residual_input_0 # a skip-connection to the input to the first uber-block
             # BN
             C = self.num_chan_bn_including_heatmap if self.config.heatmap else self.config.num_chan_bn
-            net = slim.conv2d(net, C, [5, 5], stride=2, activation_fn=None, scope='to_bn')
-            if self.config.heatmap:
+            net = slim.conv2d(net, C, [5, 5], stride=2, activation_fn=None, scope='to_bn') # k5 "n(K+1)-2"
+            if self.config.heatmap: # True by default ae_run_configs. An imporatance map
                 heatmap = self._get_heatmap3D(bottleneck=net)
                 net = self._mask_with_heatmap(net, heatmap)  # multiply net with mask(heatmap)
             else:
