@@ -12,3 +12,4 @@ in Z¯ (which is the probability of the certain pixel to be assigned to a certai
 C1::CL). The context model consists of four 3D convolution layers with a causality
 7. how did you train the context model and the autoencoder concurrently? 
 8. bitcost per symbol: NCHW  - what's a symbol?
+9. autoencoder_imgcomp.py line 102 .. what's going on there?
