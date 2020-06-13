@@ -11,3 +11,4 @@ than this the function calls itself again, why is the ```transpose_NHWC_to_NCHW`
 in Z¯ (which is the probability of the certain pixel to be assigned to a certain center
 C1::CL). The context model consists of four 3D convolution layers with a causality
 7. how did you train the context model and the autoencoder concurrently? 
+8. bitcost per symbol: NCHW  - what's a symbol?

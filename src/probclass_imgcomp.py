@@ -103,7 +103,7 @@ class _Network3D(object):
                 bc = tf.nn.softmax_cross_entropy_with_logits(
                     logits=logits, labels=targets_one_hot) * log_base_change_factor  # NCHW
 
-            return bc
+            return bc # bit cost
 
 
     def variables(self):
