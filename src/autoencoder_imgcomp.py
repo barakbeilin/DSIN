@@ -131,7 +131,7 @@ class _Network(object):
         qsoft, qhard, symbols = quantizer.quantize(inputs, self._centers, sigma=1)
         with tf.name_scope('qbar'):
             qbar = qsoft + tf.stop_gradient(qhard - qsoft) # Eq(4) in the paper
-        return _QuantizerOutput(qbar, qsoft, qhard, symbols)
+        return _QuantizerOutput(qbar, qsoft, qhard, symbols)  #q_bar is like my x_soft with data=x_hard and gards of q_soft
 
     def _normalize(self, data):
         with tf.name_scope('normalize'):
@@ -190,7 +190,8 @@ class _Network(object):
             c = tf.reshape(c, (C, 1, 1))  # shape C,1,1
 
             # construct heatmap3D
-            # if heatmap[x, y] == C, then heatmap[x, y, c] == 1 \forall c \in {0, ..., C-1}
+            # if heatmap[x, y] == C, then heatmap[x, y, c] == 1 
+            # \forall c \in {0, ..., C-1}
             heatmap3D = tf.maximum(tf.minimum(heatmap - c, 1), 0, name='heatmap3D')  # NCHW
             return heatmap3D
 
@@ -278,7 +279,8 @@ class _CVPR(_Network):
 
 
 # ------------------------------------------------------------------------------
-
+import torch
+torch.nn.functional.conv_transpose2d(
 
 @slim.add_arg_scope
 def residual_block(x, num_outputs, num_conv2d, **kwargs):
